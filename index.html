@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        
+        body {
+            font-family: "Inter", sans-serif; 
+            background-color: #f0f2f5; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; 
+            margin: 0;
+            padding: 20px; 
+            box-sizing: border-box; 
+        }
+
+        .calculator {
+            background-color: #ffffff; 
+            border-radius: 1.5rem; 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); 
+            padding: 1.5rem; 
+            max-width: 360px; 
+            width: 100%; 
+            display: flex;
+            flex-direction: column;
+            gap: 1rem; 
+        }
+
+        .calculator-display {
+            width: 100%;
+            background-color: #e2e8f0; 
+            border: none;
+            padding: 1.5rem;
+            font-size: 2.5rem;
+            text-align: right;
+            border-radius: 0.75rem;
+            color: #1a202c;
+            margin-bottom: 1rem;
+            box-sizing: border-box;
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch; 
+        }
+
+        .calculator-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 0.75rem;
+        }
+
+        .calculator-button {
+            background-color: #cbd5e0;
+            color: #2d3748; 
+            border: none;
+            padding: 1.25rem; 
+            font-size: 1.75rem;
+            border-radius: 9999px; 
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            -webkit-tap-highlight-color: transparent; 
+        }
+
+        .calculator-button:hover {
+            background-color: #a0aec0;
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); 
+        }
+
+        .calculator-button:active {
+            background-color: #718096; 
+            transform: translateY(0); 
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
+        }
+
+        
+        .calculator-button.operator {
+            background-color: #4299e1; 
+            color: white;
+        }
+
+        .calculator-button.operator:hover {
+            background-color: #3182ce;
+        }
+
+        .calculator-button.operator:active {
+            background-color: #2b6cb0;
+        }
+
+       
+        .calculator-button.trig {
+            background-color: #f6ad55; 
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .calculator-button.trig:hover {
+            background-color: #ed8936;
+        }
+
+        .calculator-button.trig:active {
+            background-color: #dd6b20;
+        }
+
+
+       
+        .calculator-button.equals {
+            background-color: #38a169;
+            color: white;
+            grid-column: span 2; 
+            border-radius: 2rem; 
+        }
+
+        .calculator-button.equals:hover {
+            background-color: #2f855a;
+        }
+
+        .calculator-button.equals:active {
+            background-color: #276749;
+        }
+
+        .calculator-button.clear {
+            background-color: #e53e3e;
+            color: white;
+        }
+
+        .calculator-button.clear:hover {
+            background-color: #c53030;
+        }
+
+        .calculator-button.clear:active {
+            background-color: #9b2c2c;
+        }
+
+       
+        .calculator-button.zero {
+            grid-column: span 2; 
+            border-radius: 2rem; 
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <input type="text" class="calculator-display" id="display" value="0" readonly>
+        <div class="calculator-buttons">
+            <button class="calculator-button clear" data-action="clear">C</button>
+            <button class="calculator-button trig" data-action="trig" data-operation="sin">sin</button>
+            <button class="calculator-button trig" data-action="trig" data-operation="cos">cos</button>
+            <button class="calculator-button trig" data-action="trig" data-operation="tan">tan</button>
+
+            <button class="calculator-button operator" data-action="divide">÷</button>
+            <button class="calculator-button" data-action="digit">7</button>
+            <button class="calculator-button" data-action="digit">8</button>
+            <button class="calculator-button" data-action="digit">9</button>
+            <button class="calculator-button operator" data-action="multiply">×</button>
+            <button class="calculator-button" data-action="digit">4</button>
+            <button class="calculator-button" data-action="digit">5</button>
+            <button class="calculator-button" data-action="digit">6</button>
+            <button class="calculator-button operator" data-action="subtract">−</button>
+            <button class="calculator-button" data-action="digit">1</button>
+            <button class="calculator-button" data-action="digit">2</button>
+            <button class="calculator-button" data-action="digit">3</button>
+            <button class="calculator-button operator" data-action="add">+</button>
+            <button class="calculator-button zero" data-action="digit">0</button>
+            <button class="calculator-button" data-action="decimal">.</button>
+            <button class="calculator-button equals" data-action="equals">=</button>
+        </div>
+    </div>
+
+    <script>
+       
+        const display = document.getElementById('display');
+        
+        const buttons = document.querySelector('.calculator-buttons');
+
+       
+        let firstOperand = null;          
+        let secondOperand = null;        
+        let operator = null;              
+        let waitingForSecondOperand = false; 
+        let currentInput = '0';           
+
+       
+        function updateDisplay() {
+            display.value = currentInput;
+        }
+
+        
+        function inputDigit(digit) {
+            if (waitingForSecondOperand) {
+                currentInput = digit;
+                waitingForSecondOperand = false;
+            } else {
+                currentInput = currentInput === '0' ? digit : currentInput + digit;
+            }
+            updateDisplay();
+        }
+
+       
+        function inputDecimal(dot) {
+            if (waitingForSecondOperand) {
+                currentInput = '0.';
+                waitingForSecondOperand = false;
+                updateDisplay();
+                return;
+            }
+
+            if (!currentInput.includes(dot)) {
+                currentInput += dot;
+            }
+            updateDisplay();
+        }
+
+       
+        function calculate(num1, num2, op) {
+            switch (op) {
+                case '+':
+                    return num1 + num2;
+                case '-':
+                    return num1 - num2;
+                case '×': 
+                case '*': 
+                    return num1 * num2;
+                case '÷':
+                case '/': 
+                    if (num2 === 0) {
+                        return 'Error: Division by Zero'; 
+                    }
+                    return num1 / num2;
+                default:
+                    return num2;
+            }
+        }
+
+        
+        function handleOperator(nextOperator) {
+            const inputValue = parseFloat(currentInput); 
+
+           
+            if (operator && waitingForSecondOperand) {
+                operator = nextOperator;
+                return;
+            }
+
+            
+            if (firstOperand === null) {
+                firstOperand = inputValue;
+            } else if (!isNaN(inputValue)) { 
+                const result = calculate(firstOperand, inputValue, operator);
+                if (typeof result === 'string') {
+                    
+                    currentInput = result;
+                    resetCalculator();
+                    updateDisplay();
+                    return;
+                }
+                firstOperand = result;
+                currentInput = String(result); 
+            }
+
+            waitingForSecondOperand = true; 
+            operator = nextOperator;        
+            updateDisplay();               
+        }
+
+       
+        function handleTrigonometricOperation(operation) {
+            let inputValue = parseFloat(currentInput);
+
+            if (isNaN(inputValue)) {
+                currentInput = 'Error';
+                updateDisplay();
+                resetCalculator();
+                return;
+            }
+
+            let result;
+            switch (operation) {
+                case 'sin':
+                    result = Math.sin(inputValue);
+                    break;
+                case 'cos':
+                    result = Math.cos(inputValue);
+                    break;
+                case 'tan':
+                   
+                    if (Math.abs(Math.cos(inputValue)) < 1e-10) { 
+                        currentInput = 'Error: tan(90 deg)';
+                        updateDisplay();
+                        resetCalculator();
+                        return;
+                    }
+                    result = Math.tan(inputValue);
+                    break;
+                default:
+                    return; 
+            }
+
+            currentInput = String(result);
+            firstOperand = null; 
+            operator = null;
+            waitingForSecondOperand = false;
+            updateDisplay();
+        }
+
+
+        
+        function resetCalculator() {
+            firstOperand = null;
+            secondOperand = null;
+            operator = null;
+            waitingForSecondOperand = false;
+            currentInput = '0';
+            updateDisplay();
+        }
+
+        
+        buttons.addEventListener('click', (event) => {
+            const { target } = event; 
+            if (!target.matches('button')) {
+                return;
+            }
+
+            
+            const action = target.dataset.action;
+            const buttonValue = target.textContent;
+            const operation = target.dataset.operation; 
+
+            if (action === 'digit') {
+                inputDigit(buttonValue);
+            } else if (action === 'decimal') {
+                inputDecimal(buttonValue);
+            } else if (action === 'clear') {
+                resetCalculator();
+            } else if (action === 'equals') {
+                
+                const inputValue = parseFloat(currentInput);
+                if (firstOperand !== null && operator && !isNaN(inputValue)) {
+                    const result = calculate(firstOperand, inputValue, operator);
+                    if (typeof result === 'string') { 
+                        currentInput = result;
+                        resetCalculator();
+                    } else {
+                        currentInput = String(result);
+                        firstOperand = null; 
+                        operator = null;
+                        waitingForSecondOperand = false;
+                    }
+                }
+                updateDisplay();
+            } else if (action === 'add' || action === 'subtract' || action === 'multiply' || action === 'divide') {
+                
+                const internalOperator = {
+                    '+': '+',
+                    '−': '-',
+                    '×': '*',
+                    '÷': '/'
+                }[buttonValue];
+                handleOperator(internalOperator);
+            } else if (action === 'trig') {
+                handleTrigonometricOperation(operation);
+            }
+        });
+
+        
+        document.addEventListener('keydown', (event) => {
+            const key = event.key;
+
+            if (key >= '0' && key <= '9') {
+                inputDigit(key);
+            } else if (key === '.') {
+                inputDecimal(key);
+            } else if (key === '+' || key === '-') {
+                handleOperator(key);
+            } else if (key === '*' || key === 'x') { 
+                handleOperator('*');
+            } else if (key === '/') {
+                handleOperator('/');
+            } else if (key === 'Enter' || key === '=') {
+                event.preventDefault(); 
+                const inputValue = parseFloat(currentInput);
+                if (firstOperand !== null && operator && !isNaN(inputValue)) {
+                    const result = calculate(firstOperand, inputValue, operator);
+                    if (typeof result === 'string') {
+                        currentInput = result;
+                        resetCalculator();
+                    } else {
+                        currentInput = String(result);
+                        firstOperand = null;
+                        operator = null;
+                        waitingForSecondOperand = false;
+                    }
+                }
+                updateDisplay();
+            } else if (key === 'Backspace') {
+                
+                event.preventDefault(); 
+                if (!waitingForSecondOperand) {
+                    currentInput = currentInput.slice(0, -1);
+                    if (currentInput === '') {
+                        currentInput = '0';
+                    }
+                    updateDisplay();
+                }
+            } else if (key === 'Escape' || key === 'c' || key === 'C') {
+                resetCalculator();
+            } else if (key.toLowerCase() === 's') {
+                handleTrigonometricOperation('sin');
+            } else if (key.toLowerCase() === 'c') { 
+                handleTrigonometricOperation('cos');
+            } else if (key.toLowerCase() === 't') {
+                handleTrigonometricOperation('tan');
+            }
+        });
+
+        
+        updateDisplay();
+    </script>
+</body>
+</html>
